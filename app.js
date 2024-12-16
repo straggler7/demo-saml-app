@@ -62,7 +62,7 @@ app.post(
   "/login/callback",
   passport.authenticate("saml", { failureRedirect: "/login" }),
   (req, res) => {
-    res.redirect("/profile"); // Redirect to a protected route after successful login
+    res.redirect("/"); // Redirect to a protected route after successful login
   }
 );
 
