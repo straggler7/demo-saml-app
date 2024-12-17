@@ -5,18 +5,19 @@ const bodyParser = require("body-parser");
 const passport = require("passport");
 const SamlStrategy = require("passport-saml").Strategy;
 const xmlbuilder = require("xmlbuilder");
-const fs = require('fs');
+const fs = require("fs");
 
 const app = express();
 const port = 4000;
 
 // SAML Configuration
 const samlOptions = {
-  entryPoint: "https://dev-44283504.okta.com/app/dev-44283504_demosamlapp_1/exklwj5n42kyzrQ6W5d7/sso/saml", // Replace with your IdP's SSO URL
-  issuer: "http://localhost:3000", // Your SP Entity ID
+  entryPoint:
+    "https://dev-44283504.okta.com/app/dev-44283504_demosamlapp_1/exklwj5n42kyzrQ6W5d7/sso/saml", // Replace with your IdP's SSO URL
+  issuer: "demo-saml-app", // Your SP Entity ID
   callbackUrl: "http://localhost:3000/login/callback", // The callback endpoint for SAML responses
-//   cert: "-----BEGIN CERTIFICATE-----\nYourIdPCertificate\n-----END CERTIFICATE-----", // Replace with IdP's X.509 certificate
-  cert: fs.readFileSync('okta-idp.cert', 'utf-8'), // Public certificate of the Identity Provider (IDP)
+  //   cert: "-----BEGIN CERTIFICATE-----\nYourIdPCertificate\n-----END CERTIFICATE-----", // Replace with IdP's X.509 certificate
+  cert: fs.readFileSync("okta-idp.cert", "utf-8"), // Public certificate of the Identity Provider (IDP)
 };
 
 // Passport SAML Strategy
@@ -44,6 +45,10 @@ passport.deserializeUser((user, done) => done(null, user));
 
 // Routes
 app.get("/", (req, res) => {
+  console.log("here now...");
+  if (res.isAuthenticated && res.isAuthenticated()) {
+    res.send("You are already authenticated");
+  }
   res.send('<a href="/login">Login with SSO</a>');
 });
 
@@ -55,7 +60,9 @@ app.post(
   "/login/callback",
   passport.authenticate("saml", { failureRedirect: "/", failureFlash: true }),
   (req, res) => {
-    console.log('login callback ---------------')
+    console.log("login callback ---------------");
+    console.log("is authenticated --------------- ", req.isAuthenticated());
+    // console.log(req);
     res.redirect("/profile");
   }
 );
@@ -64,6 +71,8 @@ app.post(
 app.get("/profile", (req, res) => {
   if (!req.isAuthenticated()) {
     return res.redirect("/");
+  } else {
+    console.log('In profile and authenticated!');
   }
   res.send(`<h1>Welcome, ${req.user.nameID}</h1><a href="/logout">Logout</a>`);
 });
@@ -88,19 +97,23 @@ app.get("/metadata", (req, res) => {
     protocolSupportEnumeration: "urn:oasis:names:tc:SAML:2.0:protocol",
   });
 
-  spSSODescriptor
-    .ele("AssertionConsumerService", {
-      Binding: "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
-      Location: samlOptions.callbackUrl,
-      index: "1",
-      isDefault: "true",
-    });
+  spSSODescriptor.ele("AssertionConsumerService", {
+    Binding: "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
+    Location: samlOptions.callbackUrl,
+    index: "1",
+    isDefault: "true",
+  });
 
   spSSODescriptor
     .ele("KeyDescriptor", { use: "signing" })
     .ele("KeyInfo", { xmlns: "http://www.w3.org/2000/09/xmldsig#" })
     .ele("X509Data")
-    .ele("X509Certificate", samlOptions.cert.replace(/-----\w+ CERTIFICATE-----/g, "").replace(/\n/g, ""))
+    .ele(
+      "X509Certificate",
+      samlOptions.cert
+        .replace(/-----\w+ CERTIFICATE-----/g, "")
+        .replace(/\n/g, "")
+    )
     .up()
     .up()
     .up()
