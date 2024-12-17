@@ -16,7 +16,7 @@ const samlOptions = {
   entryPoint:
     "https://dev-44283504.okta.com/app/dev-44283504_demosamlapp_1/exklwj5n42kyzrQ6W5d7/sso/saml", // Replace with your IdP's SSO URL
   issuer: "demo-saml-app", // Your SP Entity ID
-  callbackUrl: "http://localhost:3000/login/callback", // The callback endpoint for SAML responses
+  callbackUrl: "http://localhost4000/login/callback", // The callback endpoint for SAML responses
   //   cert: "-----BEGIN CERTIFICATE-----\nYourIdPCertificate\n-----END CERTIFICATE-----", // Replace with IdP's X.509 certificate
   cert: fs.readFileSync("okta-idp.cert", "utf-8"), // Public certificate of the Identity Provider (IDP)
 };
@@ -49,13 +49,13 @@ app.use(session({
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(
-  session({
-    secret: "your_secret",
-    resave: false,
-    saveUninitialized: true,
-  })
-);
+// app.use(
+//   session({
+//     secret: "your_secret",
+//     resave: false,
+//     saveUninitialized: true,
+//   })
+// );
 app.use(passport.initialize());
 app.use(passport.session());
 
